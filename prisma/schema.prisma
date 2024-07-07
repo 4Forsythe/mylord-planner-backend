@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority {
+  high
+  medium
+  low
+}
+
+model User {
+  id          String @id @default(cuid())
+
+  email       String @unique
+  name        String?
+  password    String
+
+  settings    Setting?
+  tasks       Task[]
+  sessions    Session[]
+  timeBlocks  TimeBlock[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user")
+}
+
+model Setting {
+  id            String @id @default(cuid())
+
+  taskInterval  Int? @default(20) @map("task_interval")
+  breakInterval Int? @default(5) @map("break_interval")
+  intervals     Int? @default(7)
+
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String @unique @map("user_id")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("setting")
+}
+
+model Task {
+  id            String @id @default(cuid())
+
+  name          String
+  priority      Priority?
+  isCompleted   Boolean? @default(false) @map("is_completed")
+
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String @map("user_id")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("task")
+}
+
+model Session {
+  id            String @id @default(cuid())
+
+  isCompleted   Boolean? @default(false) @map("is_completed")
+
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String @map("user_id")
+
+  rounds        SessionRound[]
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("session")
+}
+
+model SessionRound {
+  id            String @id @default(cuid())
+
+  seconds       Int
+  isCompleted   Boolean? @default(false) @map("is_completed")
+
+  session       Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId     String @map("session")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("session_round")
+}
+
+model TimeBlock {
+  id          String @id @default(cuid())
+
+  name        String
+  color       String?
+  order       Int @default(1)
+  duration    Int
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String @map("user_id")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("timeblock")
+}
